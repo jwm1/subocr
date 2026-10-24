@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Subocr · Review subtitles</title>
+<style>
+:root{color-scheme:light;--ink:#163235;--muted:#527073;--line:#c9d8d7;--accent:#126d65;--paper:#fff;--bg:#edf3f2}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}header{padding:22px 30px;background:var(--ink);color:white;display:flex;align-items:center;gap:25px;flex-wrap:wrap}h1{font-size:24px;margin:0}header p{margin:3px 0;color:#bfd9d5}button,select,input,textarea{font:inherit}button,select,input[type=search]{border:1px solid var(--line);border-radius:6px;padding:8px 12px;background:white;color:var(--ink)}button{cursor:pointer}button:hover{border-color:var(--accent);background:#e5f4f0}button:disabled{opacity:.45;cursor:default}.primary{background:var(--accent);color:white;border-color:var(--accent)}.primary:hover{background:#07584e;color:white}.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:15px 30px;border-bottom:1px solid var(--line);background:white}.toolbar label{display:flex;gap:6px;align-items:center}#search{min-width:220px;flex:1}.layout{display:grid;grid-template-columns:330px minmax(0,1fr);gap:22px;padding:22px 30px;max-width:1600px;margin:auto}aside,main{min-width:0}.panel{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:20px}.list{height:64vh;overflow:auto;margin-top:10px}.cue{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #e3ebea;border-radius:0;padding:11px 12px}.cue.selected{background:#d9eee9;border-left:4px solid var(--accent)}.cue small{display:block;color:var(--muted)}.cue span{display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.muted{color:var(--muted);font-size:13px}.navigation{display:flex;gap:8px;align-items:center;justify-content:space-between}.badge{display:inline-block;border-radius:4px;padding:3px 8px;background:#e7f1ee;font-size:12px}.flag{background:#fff0ce;color:#79530a;margin:3px 5px 3px 0}#image{width:100%;max-height:220px;object-fit:contain;background:#182222;border-radius:6px;margin:16px 0}textarea{display:block;width:100%;min-height:110px;border:1px solid #8ca8a4;border-radius:6px;padding:12px;font-size:23px;color:var(--ink);resize:vertical}textarea:focus{outline:3px solid #b8e1d7}label[for=text]{display:block;font-weight:650;margin:14px 0 6px}.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}details{margin-top:18px}summary{cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f0f5f4;padding:12px;border-radius:6px}#notice{padding:10px 30px;margin:0;background:#d9eee9}#notice:empty{display:none}#counter{margin-left:auto;font-size:14px}#video{width:100%;max-height:360px;background:#182222;margin-top:12px}footer{padding:0 30px 24px;color:var(--muted);max-width:1600px;margin:auto}a{color:var(--accent)}[hidden]{display:none!important}@media(max-width:850px){.layout{grid-template-columns:1fr;padding:15px}.list{height:200px}.toolbar,header{padding:15px}footer{padding:15px}}
+</style>
+</head>
+<body>
+<header><div><h1>Subtitle review</h1><p id="title"></p></div><div id="counter" role="status"></div></header>
+<div class="toolbar"><input id="search" type="search" placeholder="Search subtitle text" aria-label="Search subtitle text"><select id="language" aria-label="Language"><option value="">All languages</option></select><label><input type="checkbox" id="flagged"> Flagged only</label><label><input type="checkbox" id="changed"> Changed only</label><button id="download" class="primary">Download corrections</button><button id="import">Import corrections</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
+<p id="notice" role="status" aria-live="polite"></p>
+<div class="layout">
+<aside class="panel"><div class="navigation"><button id="pageBack" aria-label="Previous page">‹</button><span id="matches" class="muted"></span><button id="pageNext" aria-label="Next page">›</button></div><div id="list" class="list" aria-label="Cue list"></div></aside>
+<main>
+<div class="panel" id="editor"><div class="navigation"><button id="previous">← Previous</button><strong id="position"></strong><button id="next">Next →</button></div><p><span class="badge" id="timing"></span> <span class="muted" id="confidence"></span></p><div id="flags"></div><img id="image" alt="Caption crop from the source video"><p id="noImage" class="muted" hidden>No caption image is available for this imported track.</p><label for="text">Subtitle text</label><textarea id="text" spellcheck="false"></textarea><div class="actions"><label><input type="checkbox" id="deleted"> Remove this cue</label><button id="resetCue">Restore original cue</button></div><details><summary>Original text</summary><pre id="original"></pre></details></div>
+<p id="empty" class="panel" hidden>No cues match these filters.</p>
+<details class="panel"><summary>Watch the source video</summary><p class="muted">Choose the original local video. It stays on your computer. Use “Play cue” to check a boundary; browser codec support varies.</p><input type="file" id="videoFile" accept="video/*"><video id="video" controls hidden></video><button id="play" disabled>Play cue</button><p class="muted" id="videoName"></p></details>
+<details class="panel"><summary>Apply corrections and export subtitles</summary><p>Download the correction file, then run this command from its folder. It writes new subtitle files and retains the raw OCR record.</p><pre id="command"></pre><p class="muted">Text edits and removals preserve the existing timestamps. Draft edits are saved in this browser when local storage is available. Download a correction file to keep a portable copy.</p></details>
+</main>
+</div>
+<footer>Images show one recognized frame, not the entire cue. Flags are review suggestions. Use Alt+← / Alt+→ to navigate and Ctrl+S to download corrections. Everything on this page works locally.</footer>
+<script id="data" type="application/json">__SUBOCR_DATA__</script>
+<script>
+'use strict';
+const data=JSON.parse(document.getElementById('data').textContent), $=id=>document.getElementById(id);
+const records=data.records, key=c=>JSON.stringify([c.language,c.start,c.original]);
+const storageKey='subocr-review-'+data.identity;
+let edits=new Map(), filtered=[], selected=0, page=0, videoUrl=null, stopAt=null;
+function validateEdits(values){
+ if(!Array.isArray(values)) throw Error('Corrections must be a JSON list.');
+ const result=new Map();
+ for(const edit of values){
+  if(!edit || typeof edit.language!=='string' || typeof edit.start!=='number' || !Number.isFinite(edit.start) || typeof edit.original!=='string' || (edit.delete!==true && (typeof edit.text!=='string' || !edit.text.trim()))) throw Error('A correction has missing or invalid fields.');
+  const matches=records.filter(c=>c.language===edit.language && Math.abs(c.start-edit.start)<.001 && c.original===edit.original);
+  if(matches.length!==1) throw Error('A correction does not match exactly one original cue.');
+  const k=key(matches[0]);if(result.has(k)) throw Error('Duplicate correction for one cue.');
+  result.set(k, edit.delete===true ? {language:edit.language,start:matches[0].start,original:edit.original,delete:true} : {language:edit.language,start:matches[0].start,original:edit.original,text:edit.text.trim()});
+ }
+ return result;
+}
+function notice(text){$('notice').textContent=text;}
+function persist(){
+ try{localStorage.setItem(storageKey,JSON.stringify([...edits.values()]));}catch{notice('Browser storage is unavailable. Download corrections before closing this page.');}
+ $('counter').textContent=records.length+' cues · '+edits.size+' corrections';
+}
+try{
+ edits=validateEdits(data.corrections);
+ const saved=localStorage.getItem(storageKey);
+ if(saved!==null){edits=validateEdits(JSON.parse(saved));notice('Restored your saved draft edits.');}
+}catch(error){notice(error.message+' The source file has not changed.');}
+function caption(c){const e=edits.get(key(c));return e?.delete ? '[Removed] '+c.original : e?.text ?? c.original;}
+function time(t){return new Date(Math.round(t*1000)).toISOString().slice(11,23);}
+function filter(){
+ const query=$('search').value.toLocaleLowerCase();
+ filtered=records.map((c,i)=>i).filter(i=>{const c=records[i];return (!$('language').value||c.language===$('language').value)&&(!$('flagged').checked||c.flags.length)&&(!$('changed').checked||edits.has(key(c)))&&(!query||(c.original+' '+caption(c)).toLocaleLowerCase().includes(query));});
+ if(!filtered.includes(selected))selected=filtered[0];
+ page=Math.max(0,Math.floor(filtered.indexOf(selected)/100));render();
+}
+function renderList(){
+ $('list').replaceChildren();
+ const from=page*100,shown=filtered.slice(from,from+100);
+ $('matches').textContent=filtered.length ? (from+1)+'–'+(from+shown.length)+' of '+filtered.length : '0 matches';
+ $('pageBack').disabled=page===0;$('pageNext').disabled=from+100>=filtered.length;
+ for(const index of shown){
+  const c=records[index], button=document.createElement('button');button.type='button';button.className='cue'+(index===selected?' selected':'');button.dataset.index=index;
+  const label=document.createElement('small');label.textContent=c.language.toUpperCase()+' · '+time(c.start)+(c.flags.length?' · Flagged':'')+(edits.has(key(c))?' · Edited':'');
+  const text=document.createElement('span');text.textContent=caption(c);button.append(label,text);button.onclick=()=>{selected=index;render();};$('list').append(button);
+ }
+}
+function render(){
+ renderList();const c=records[selected];$('editor').hidden=!c||!filtered.length;$('empty').hidden=!!filtered.length;
+ if(!c||!filtered.length)return;
+ const e=edits.get(key(c)),position=filtered.indexOf(selected);
+ $('position').textContent=c.language.toUpperCase()+' · Cue '+(position+1)+' / '+filtered.length;
+ $('previous').disabled=position===0;$('next').disabled=position===filtered.length-1;
+ $('timing').textContent=time(c.start)+' → '+time(c.end);
+ $('confidence').textContent=c.source==='OCR'?'OCR confidence '+Math.round(c.confidence*100)+'%':'Imported subtitle';
+ $('flags').replaceChildren();for(const flag of c.flags){const badge=document.createElement('span');badge.className='badge flag';badge.textContent=flag.replaceAll('_',' ');$('flags').append(badge);}
+ $('image').hidden=!c.image;$('noImage').hidden=!!c.image;if(c.image)$('image').src=c.image;
+ $('text').value=e?.text??c.original;$('text').disabled=e?.delete===true;$('deleted').checked=e?.delete===true;$('original').textContent=c.original;
+}
+function move(delta){const position=filtered.indexOf(selected)+delta;if(position>=0&&position<filtered.length){selected=filtered[position];page=Math.floor(position/100);render();}}
+function saveCurrent(){
+ const c=records[selected];if(!c)return;
+ const text=$('text').value.trim(),deleted=$('deleted').checked;
+ if(!deleted&&!text){$('text').setCustomValidity('Use Remove this cue to delete a subtitle.');$('text').reportValidity();return;}
+ $('text').setCustomValidity('');
+ if(deleted)edits.set(key(c),{language:c.language,start:c.start,original:c.original,delete:true});
+ else if(text!==c.original)edits.set(key(c),{language:c.language,start:c.start,original:c.original,text});
+ else edits.delete(key(c));
+ $('text').disabled=deleted;persist();renderList();
+}
+function download(){
+ if(!$('text').checkValidity()){$('text').reportValidity();return;}
+ const blob=new Blob([JSON.stringify([...edits.values()],null,2)+'\n'],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='corrections.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notice('Downloaded corrections.json. Apply it with the command below to write new subtitle files.');
+}
+$('title').textContent=data.title;$('command').textContent=data.command;$('videoName').textContent=data.source_video;
+for(const language of data.languages){const option=document.createElement('option');option.value=language;option.textContent=language==='zh'?'Chinese':'English';$('language').append(option);}
+for(const name of ['search','language','flagged','changed'])$(name).addEventListener(name==='search'?'input':'change',filter);
+$('previous').onclick=()=>move(-1);$('next').onclick=()=>move(1);
+$('pageBack').onclick=()=>{page--;renderList();};$('pageNext').onclick=()=>{page++;renderList();};
+$('text').oninput=saveCurrent;$('deleted').onchange=saveCurrent;
+$('resetCue').onclick=()=>{edits.delete(key(records[selected]));persist();filter();};
+$('download').onclick=download;$('import').onclick=()=>$('importFile').click();
+$('importFile').onchange=async event=>{try{const file=event.target.files[0];if(!file)return;const incoming=validateEdits(JSON.parse(await file.text()));for(const [k,v] of incoming)edits.set(k,v);persist();filter();notice('Imported '+incoming.size+' corrections.');}catch(error){notice('Import failed: '+error.message);}event.target.value='';};
+$('videoFile').onchange=event=>{const file=event.target.files[0];if(!file)return;if(videoUrl)URL.revokeObjectURL(videoUrl);videoUrl=URL.createObjectURL(file);$('video').src=videoUrl;$('video').hidden=false;$('play').disabled=false;$('videoName').textContent=file.name;};
+$('video').onerror=()=>notice('This browser cannot play the selected video. Caption images and editing still work.');
+$('play').onclick=()=>{const c=records[selected];if(!c)return;$('video').currentTime=Math.max(0,c.start-.25);stopAt=c.end+.25;$('video').play().catch(error=>notice(error.message));};
+$('video').ontimeupdate=()=>{if(stopAt!==null&&$('video').currentTime>=stopAt){$('video').pause();stopAt=null;}};
+document.addEventListener('keydown',event=>{if(event.altKey&&event.key==='ArrowRight'){event.preventDefault();move(1);}if(event.altKey&&event.key==='ArrowLeft'){event.preventDefault();move(-1);}if((event.ctrlKey||event.metaKey)&&event.key==='s'){event.preventDefault();download();}});
+persist();filter();
+</script>
+</body>
+</html>
