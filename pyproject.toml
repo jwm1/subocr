@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "subocr"
+version = "1.2.1"
+description = "Offline Chinese/English burnt-in subtitle OCR with source-video timestamps"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+classifiers = ["License :: OSI Approved :: GNU General Public License v3 (GPLv3)"]
+dependencies = [
+  "av==19.0.2",
+  "rapidocr-onnxruntime==1.4.4",
+  "onnxruntime==1.31.0",
+  "numpy>=1.26,<3",
+  "opencv-python>=4.6,<5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9", "Pillow>=10,<13", "build>=1,<2", "setuptools>=68", "wheel"]
+
+[project.scripts]
+subocr = "subocr:main"
+
+[tool.setuptools]
+license-files = ["LICENSE", "NOTICE", "subocr_assets/LICENSE-RapidOCR"]
+py-modules = ["subocr", "subocr_batch", "subocr_detect", "subocr_review", "subocr_tools", "subocr_tracks", "subocr_validate"]
+packages = ["subocr_assets"]
+
+[tool.setuptools.package-data]
+subocr_assets = ["*.onnx", "*.html", "LICENSE-*"]

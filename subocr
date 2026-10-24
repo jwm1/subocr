@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+subocr_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -n "${SUBOCR_PYTHON:-}" ]]; then
+  subocr_python="$SUBOCR_PYTHON"
+elif [[ -x "$subocr_root/.venv/bin/python" ]]; then
+  subocr_python="$subocr_root/.venv/bin/python"
+else
+  echo 'Create .venv and install requirements.txt, or set SUBOCR_PYTHON.' >&2
+  exit 1
+fi
+exec "$subocr_python" "$subocr_root/subocr.py" "$@"

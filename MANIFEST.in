@@ -1,0 +1,11 @@
+include LICENSE NOTICE README.md VALIDATION.md CONTRIBUTING.md Makefile requirements.txt
+include subocr
+include .gitignore .gitattributes
+recursive-include subocr_assets *.onnx *.html LICENSE-*
+recursive-include models *.md
+recursive-include outputs README.md
+recursive-include scripts *.py *.sh
+recursive-include tests *.py *.cjs
+recursive-include skills *.md
+recursive-include .github *.yml
+recursive-exclude * __pycache__ *.pyc

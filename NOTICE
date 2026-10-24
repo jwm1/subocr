@@ -1,0 +1,17 @@
+subocr
+
+Project source code, tests, scripts and documentation are licensed under
+GNU General Public License version 3 only (SPDX: GPL-3.0-only).
+The complete license is provided in LICENSE.
+
+Third-party material
+
+subocr_assets/en_PP-OCRv4_rec.onnx is the English PP-OCRv4 recognition model
+distributed by RapidOCR. Its upstream Apache License 2.0 text is retained in
+subocr_assets/LICENSE-RapidOCR. Source information and the model checksum are
+recorded in models/README.md. The project license does not replace the
+upstream license terms for this material.
+
+Dependencies installed separately retain their own licenses. Source videos,
+extracted captions and user-specific test data are not included in this
+source distribution.
