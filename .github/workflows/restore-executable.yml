@@ -1,0 +1,24 @@
+name: Restore executable permissions
+
+on:
+  push:
+    paths:
+      - .github/workflows/restore-executable.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Restore executable modes lost during browser upload
+        run: |
+          git update-index --chmod=+x subocr scripts/install_local.sh scripts/audit_boundaries.py
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Restore executable permissions after browser upload'
+            git push origin HEAD:main
+          fi
